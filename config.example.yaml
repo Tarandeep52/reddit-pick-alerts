@@ -1,0 +1,32 @@
+# Copy this to config.yaml and edit. No secrets go in here — the Telegram
+# token and chat id are read from environment variables (see .env.example).
+
+# One line per tipster. Adding a new user is a one-line change.
+usernames:
+  - Suspicious-Cow-1909
+
+# How often to poll each feed, in seconds.
+poll_interval_seconds: 60
+
+# A comment is treated as a pick only when it contains ALL of these
+# (case-insensitive). Keep the default to match "Stake:" and "Odds:" posts.
+trigger_keywords:
+  - "Stake:"
+  - "Odds:"
+
+# Where dedupe/edit state is stored (so restarts don't re-alert).
+state_file: state.json
+
+# Times in alerts are shown in this zone.
+timezone: Asia/Kolkata
+
+# Reddit blocks default/empty User-Agents. Personalise this — including your
+# Reddit username or a contact is good etiquette.
+user_agent: "reddit-pick-alerts/1.0 (alert-only; by u/your-reddit-name)"
+
+request_timeout_seconds: 20
+max_backoff_seconds: 900
+
+health:
+  # Warn once over Telegram if no poll has succeeded for this many minutes.
+  no_poll_warning_minutes: 15

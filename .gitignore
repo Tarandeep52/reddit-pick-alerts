@@ -1,0 +1,16 @@
+# Secrets — NEVER commit this
+.env
+
+# Note: config.yaml and state.json ARE committed on purpose for the GitHub
+# Actions runner (config has no secrets; state.json is how dedupe survives
+# between scheduled runs). If you only run locally and don't want them tracked,
+# add them back here.
+state.json.corrupt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/

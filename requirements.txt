@@ -1,0 +1,5 @@
+requests>=2.31,<3
+feedparser>=6.0.10,<7
+PyYAML>=6.0,<7
+# Needed for zoneinfo (Asia/Kolkata) on Windows and on slim Docker images.
+tzdata>=2024.1

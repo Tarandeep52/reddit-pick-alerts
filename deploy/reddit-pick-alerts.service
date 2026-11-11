@@ -1,0 +1,18 @@
+[Unit]
+Description=Reddit betting-pick Telegram alerts (alert-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust these paths to where you cloned the project.
+WorkingDirectory=/opt/reddit-pick-alerts
+# Secrets live here as KEY=VALUE lines (chmod 600). Not committed to git.
+EnvironmentFile=/opt/reddit-pick-alerts/.env
+ExecStart=/opt/reddit-pick-alerts/.venv/bin/python main.py --config config.yaml
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
