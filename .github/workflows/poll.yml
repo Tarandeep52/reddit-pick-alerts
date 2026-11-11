@@ -9,7 +9,12 @@ name: poll
 on:
   schedule:
     - cron: "*/5 * * * *"     # every 5 minutes (GitHub may delay it)
-  workflow_dispatch: {}         # lets you run it by hand (use this for the first run)
+  workflow_dispatch:            # lets you run it by hand (use this for the first run)
+    inputs:
+      send_test:
+        description: "Send a test Telegram alert instead of polling"
+        type: boolean
+        default: false
 
 # Needed so the job can commit the updated state file back to the repo.
 permissions:
@@ -33,7 +38,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Send a test alert (manual test only)
+        if: ${{ inputs.send_test }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tools/send_test_alert.py --config config.yaml
+
       - name: Poll once and alert
+        if: ${{ !inputs.send_test }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
