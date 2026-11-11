@@ -5,13 +5,16 @@
 # One line per tipster. Add another to follow more people.
 usernames:
   - Suspicious-Cow-1909
+  - X_Underscore_X
 
 poll_interval_seconds: 60
 
 # A comment counts as a pick only if it contains ALL of these (case-insensitive).
+# Kept to just "Stake:" because both posters always include it, but they format
+# odds differently (one writes "Odds: 1.95", the other writes "@2.43" inline),
+# so requiring an "Odds:" label would miss X_Underscore_X's picks entirely.
 trigger_keywords:
   - "Stake:"
-  - "Odds:"
 
 state_file: state.json
 
