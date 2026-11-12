@@ -9,12 +9,13 @@ usernames:
 
 poll_interval_seconds: 60
 
-# A comment counts as a pick only if it contains ALL of these (case-insensitive).
-# Kept to just "Stake:" because both posters always include it, but they format
-# odds differently (one writes "Odds: 1.95", the other writes "@2.43" inline),
-# so requiring an "Odds:" label would miss X_Underscore_X's picks entirely.
-trigger_keywords:
-  - "Stake:"
+# A comment counts as a pick if ANY of these regexes match (case-insensitive).
+# These tipsters switch formats: sometimes "Stake: 5 units", sometimes "| 3u"
+# with the line/odds inline (e.g. "+18.5 (-115)"). Matching any stake marker
+# catches every style while ignoring their non-pick chatter replies.
+trigger_patterns:
+  - 'stake\s*[:=]'                              # "Stake: 5 units"
+  - '(?<![\w.])\d+(?:\.\d+)?\s*u(?:nits?)?\b'   # "3u", "5u", "3.5u", "5 units"
 
 state_file: state.json
 

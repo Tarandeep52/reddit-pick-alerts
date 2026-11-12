@@ -19,7 +19,7 @@ import time
 from alerts import feed, notifier
 from alerts.config import load_config, load_credentials, load_dotenv
 from alerts.feed import RateLimited
-from alerts.parse import contains_all_keywords, text_hash, to_plain_text
+from alerts.parse import matches_any_pattern, text_hash, to_plain_text
 from alerts.state import Store
 
 log = logging.getLogger("reddit-pick-alerts")
@@ -43,7 +43,7 @@ def process_user(username, comments, store, cfg, creds):
         try:
             plain = to_plain_text(c.content_html)
             h = text_hash(plain)
-            is_pick = contains_all_keywords(plain, cfg.trigger_keywords)
+            is_pick = matches_any_pattern(plain, cfg.trigger_patterns)
             rec = store.get(c.id)
 
             if rec is None:

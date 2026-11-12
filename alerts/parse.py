@@ -55,6 +55,24 @@ def contains_all_keywords(plain_text: str, keywords) -> bool:
     return all(str(k).lower() in low for k in keywords)
 
 
+def matches_any_pattern(plain_text: str, patterns) -> bool:
+    """True when ANY trigger regex matches (case-insensitive).
+
+    Used to decide a comment is a pick. These tipsters vary their format
+    (``Stake: 5 units`` one day, ``| 3u`` the next), so we look for any
+    stake marker rather than a fixed set of literal keywords.
+    """
+    for p in patterns:
+        try:
+            if re.search(str(p), plain_text, re.I):
+                return True
+        except re.error:
+            # A bad pattern must never crash the poller.
+            if str(p).lower() in plain_text.lower():
+                return True
+    return False
+
+
 @dataclass
 class Pick:
     pick: Optional[str] = None
@@ -70,8 +88,9 @@ def extract_odds(text: str) -> Optional[float]:
     if m:
         return float(m.group(1))
     # Fallback: a decimal in a plausible odds range, not glued to a letter
-    # (so "u4.5 goals" / "o2.5" totals are skipped by the look-behind).
-    for mm in re.finditer(r"(?<![\w.])" + _NUM, text):
+    # (so "u4.5 goals" / "o2.5" totals are skipped) and not preceded by + or -
+    # (so spreads like "+18.5" and American odds like "-115" are skipped).
+    for mm in re.finditer(r"(?<![\w.+\-])" + _NUM, text):
         token = mm.group(1)
         if "." not in token:
             continue

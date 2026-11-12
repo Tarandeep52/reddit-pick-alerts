@@ -3,11 +3,13 @@
 Run with:  python -m pytest  (from the project root)
 """
 
+from alerts.config import DEFAULT_TRIGGER_PATTERNS
 from alerts.parse import (
     extract_fields,
     extract_min_odds,
     extract_odds,
     extract_stake,
+    matches_any_pattern,
     to_plain_text,
 )
 
@@ -63,6 +65,30 @@ def test_extract_min_odds():
 
 def test_extract_min_odds_dont_take_below_phrasing():
     assert extract_min_odds("Odds: 2.0 Stake: 3 units. Don't take it below 1.9") == 1.9
+
+
+# --- trigger (is this comment a pick?) -------------------------------------
+
+def test_trigger_matches_labelled_and_inline_stakes():
+    P = DEFAULT_TRIGGER_PATTERNS
+    # Labelled stake (one posting style).
+    assert matches_any_pattern("Odds: 1.95 Stake: 5 units", P)
+    # Inline unit stake with no labels (the style that was being missed).
+    assert matches_any_pattern("Sacramento State +18.5 (-115) | 3u", P)
+    assert matches_any_pattern("Pick: Monaco ML- 1.9- 5U", P)
+    assert matches_any_pattern("+79.96 units | ROI +20.0%", P)
+
+
+def test_trigger_ignores_chatter_replies():
+    P = DEFAULT_TRIGGER_PATTERNS
+    assert not matches_any_pattern("lol you literally won and i lost", P)
+    assert not matches_any_pattern("cant always win, its normal", P)
+    assert not matches_any_pattern("thanks i just updated it", P)
+
+
+def test_odds_skips_spread_and_american():
+    # "+18.5" is a spread and "-115" is American odds; neither is decimal odds.
+    assert extract_odds("Sacramento State +18.5 (-115) | 3u") is None
 
 
 # --- combined --------------------------------------------------------------

@@ -16,11 +16,21 @@ import yaml
 DEFAULT_USER_AGENT = "reddit-pick-alerts/1.0 (alert-only; set your contact here)"
 
 
+# A comment is treated as a pick if ANY of these regexes match (case-insensitive).
+# Covers labelled stakes ("Stake: 5 units") and inline unit stakes ("3u", "5u",
+# "3.5u"), since these tipsters switch between the two styles.
+DEFAULT_TRIGGER_PATTERNS = [
+    r"stake\s*[:=]",
+    r"(?<![\w.])\d+(?:\.\d+)?\s*u(?:nits?)?\b",
+]
+
+
 @dataclass
 class Config:
     usernames: List[str] = field(default_factory=list)
     poll_interval_seconds: int = 60
-    trigger_keywords: List[str] = field(default_factory=lambda: ["Stake:", "Odds:"])
+    trigger_patterns: List[str] = field(
+        default_factory=lambda: list(DEFAULT_TRIGGER_PATTERNS))
     state_file: str = "state.json"
     timezone: str = "Asia/Kolkata"
     user_agent: str = DEFAULT_USER_AGENT
@@ -40,10 +50,15 @@ def load_config(path: str) -> Config:
         raw = yaml.safe_load(fh) or {}
 
     health = raw.get("health", {}) or {}
+    # Prefer trigger_patterns; fall back to the default set. (Older configs that
+    # only had trigger_keywords still work — the defaults cover their picks.)
+    patterns = raw.get("trigger_patterns")
+    if not patterns:
+        patterns = list(DEFAULT_TRIGGER_PATTERNS)
     cfg = Config(
         usernames=list(raw.get("usernames", []) or []),
         poll_interval_seconds=int(raw.get("poll_interval_seconds", 60)),
-        trigger_keywords=list(raw.get("trigger_keywords", ["Stake:", "Odds:"])),
+        trigger_patterns=list(patterns),
         state_file=str(raw.get("state_file", "state.json")),
         timezone=str(raw.get("timezone", "Asia/Kolkata")),
         user_agent=str(raw.get("user_agent", DEFAULT_USER_AGENT)),
