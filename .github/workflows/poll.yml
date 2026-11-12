@@ -1,15 +1,15 @@
 name: poll
 
-# Free 24/7 runner: GitHub runs this on a timer, so you don't maintain a server.
-# Latency note: GitHub's scheduler often lags the cron time by 5-15 minutes
-# (sometimes more at peak), so alerts arrive within roughly that window rather
-# than ~1 minute. For ~1-minute latency, run main.py as a long process on an
-# always-on machine instead (see the README).
+# NOTE: The automatic schedule is DISABLED because the watcher now runs 24/7 on
+# an always-on VM (deploy/setup_vm.sh), which polls every ~60s from its own IP.
+# Running both at once would send duplicate Telegram alerts, so the cron below is
+# commented out. Manual runs (workflow_dispatch) still work for a one-off test.
+# To fall back to GitHub-only, re-enable the schedule and stop the VM service.
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"     # every 5 minutes (GitHub may delay it)
-  workflow_dispatch:            # lets you run it by hand (use this for the first run)
+  # schedule:
+  #   - cron: "*/5 * * * *"     # disabled: the VM is the live poller now
+  workflow_dispatch:            # lets you run it by hand (e.g. a test alert)
     inputs:
       send_test:
         description: "Send a test Telegram alert instead of polling"
