@@ -37,6 +37,13 @@ class Config:
     request_timeout_seconds: float = 20
     max_backoff_seconds: float = 900
     no_poll_warning_minutes: int = 15
+    # Reddit rate-limits unauthenticated feeds hard (the 2nd rapid request from
+    # an IP usually gets HTTP 429). Space per-user fetches out and retry 429s so
+    # every watched user actually gets polled on each cycle.
+    per_user_delay_seconds: float = 30
+    fetch_attempts: int = 3
+    retry_429_wait_seconds: float = 45
+    max_429_wait_seconds: float = 180
 
 
 @dataclass
@@ -65,6 +72,10 @@ def load_config(path: str) -> Config:
         request_timeout_seconds=float(raw.get("request_timeout_seconds", 20)),
         max_backoff_seconds=float(raw.get("max_backoff_seconds", 900)),
         no_poll_warning_minutes=int(health.get("no_poll_warning_minutes", 15)),
+        per_user_delay_seconds=float(raw.get("per_user_delay_seconds", 30)),
+        fetch_attempts=int(raw.get("fetch_attempts", 3)),
+        retry_429_wait_seconds=float(raw.get("retry_429_wait_seconds", 45)),
+        max_429_wait_seconds=float(raw.get("max_429_wait_seconds", 180)),
     )
     if not cfg.usernames:
         raise ValueError("config: 'usernames' must list at least one Reddit user")

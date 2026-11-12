@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import random
 import sys
 import time
 
@@ -77,19 +78,48 @@ def process_user(username, comments, store, cfg, creds):
     return alerts_sent
 
 
+def _fetch_user_with_retry(username, cfg):
+    """Fetch one user's comments, retrying on 429 so a transient rate-limit
+    does not silently skip that user for the whole cycle. Returns the comment
+    list, or raises the last exception if every attempt failed."""
+    last_exc = None
+    for attempt in range(1, cfg.fetch_attempts + 1):
+        try:
+            return feed.fetch_comments(
+                username, cfg.user_agent, timeout=cfg.request_timeout_seconds)
+        except RateLimited as exc:
+            last_exc = exc
+            if attempt >= cfg.fetch_attempts:
+                break
+            wait = min(exc.retry_after or cfg.retry_429_wait_seconds,
+                       cfg.max_429_wait_seconds)
+            log.warning("429 on u/%s (attempt %d/%d); waiting %.0fs then retrying.",
+                        username, attempt, cfg.fetch_attempts, wait)
+            time.sleep(wait)
+    raise last_exc
+
+
 def poll_once(cfg, creds, store):
-    """One cycle across all users. Returns True if at least one fetch worked."""
+    """One cycle across all users. Returns (any_success, retry_after).
+
+    Users are fetched one at a time with a delay between them, because Reddit
+    rate-limits rapid successive requests from one IP. The order is rotated each
+    cycle so no single user is always the one that hits a limit.
+    """
     any_success = False
     retry_after = None
-    for username in cfg.usernames:
+    users = list(cfg.usernames)
+    random.shuffle(users)
+    for i, username in enumerate(users):
+        if i > 0 and cfg.per_user_delay_seconds > 0:
+            time.sleep(cfg.per_user_delay_seconds)
         try:
-            comments = feed.fetch_comments(
-                username, cfg.user_agent, timeout=cfg.request_timeout_seconds)
+            comments = _fetch_user_with_retry(username, cfg)
             process_user(username, comments, store, cfg, creds)
             any_success = True
         except RateLimited as exc:
-            log.warning("Rate limited on u/%s (retry after %s).",
-                        username, exc.retry_after)
+            log.warning("Rate limited on u/%s after %d attempts.",
+                        username, cfg.fetch_attempts)
             if exc.retry_after:
                 retry_after = max(retry_after or 0, exc.retry_after)
         except Exception:

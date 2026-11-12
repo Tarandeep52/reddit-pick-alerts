@@ -27,5 +27,13 @@ user_agent: "reddit-pick-alerts/1.0 (alert-only; by u/your-reddit-name)"
 request_timeout_seconds: 20
 max_backoff_seconds: 900
 
+# Reddit blocks rapid successive requests from one IP (the 2nd fetch usually
+# gets HTTP 429). Fetch users one at a time with a gap, and retry 429s, so every
+# watched user is actually polled each cycle.
+per_user_delay_seconds: 30
+fetch_attempts: 3
+retry_429_wait_seconds: 45
+max_429_wait_seconds: 180
+
 health:
   no_poll_warning_minutes: 15
